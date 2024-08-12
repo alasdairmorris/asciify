@@ -1,31 +1,38 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"strconv"
+	"log"
+	"os"
 
+	anyascii "github.com/anyascii/go"
 	"github.com/docopt/docopt-go"
 )
 
 const version = "v0.1"
 
-const usage = `Normalise a text file containing non-ASCII characters into their ASCII equivalents.
+const usage = `
+Transliterate file(s) containing Unicode characters into ASCII equivalents.
+
+Reads from given files, or stdin by default.
+
+Outputs to stdout.
 
 Usage:
-  asciify -p PORT
+  asciify [FILE...]
   asciify -h | --help
   asciify --version
 
 Global Options:
   -h, --help             Show this screen.
   --version              Show version.
-  -p, --port PORT        Port to listen on.
 
 Homepage: https://github.com/alasdairmorris/asciify
 `
 
 type Config struct {
-	Port int
+	infiles []string
 }
 
 func exitOnError(e error) {
@@ -40,24 +47,55 @@ func getConfig() Config {
 	var (
 		retval Config
 		opts   docopt.Opts
-		port   string
 		err    error
 	)
 
 	opts, err = docopt.ParseArgs(usage+" ", nil, version)
 	exitOnError(err)
 
-	// Port
-	port, err = opts.String("--port")
-	exitOnError(err)
-
-	retval.Port, err = strconv.Atoi(port)
-	exitOnError(err)
+	// Input file(s)
+	if infiles, ok := opts["FILE"].([]string); ok {
+		for _, i := range infiles {
+			if _, err := os.Stat(i); err != nil {
+				log.Fatal(fmt.Sprintf("Error accessing file %s - %s", i, err))
+			}
+			retval.infiles = append(retval.infiles, i)
+		}
+	}
 
 	return retval
 }
 
 func main() {
-	var config = getConfig()
-	fmt.Println(config)
+	log.SetFlags(0)
+	config := getConfig()
+	if len(config.infiles) > 0 {
+
+		for _, path := range config.infiles {
+			fp, err := os.Open(path)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer fp.Close()
+
+			scanner := bufio.NewScanner(fp)
+			for scanner.Scan() {
+				fmt.Println(anyascii.Transliterate(scanner.Text()))
+			}
+
+			if err := scanner.Err(); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+	} else {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			fmt.Println(anyascii.Transliterate(scanner.Text()))
+		}
+
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
+	}
 }

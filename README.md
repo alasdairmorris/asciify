@@ -1,6 +1,6 @@
 # asciify
 
-Normalise a text file containing non-ASCII characters into their ASCII equivalents.
+Transliterate file(s) containing Unicode characters into ASCII equivalents.
 
 ## Installation
 
@@ -56,9 +56,31 @@ go install github.com/alasdairmorris/asciify@latest
 
 ## Usage
 
+```
+Transliterate file(s) containing Unicode characters into ASCII equivalents.
+
+Reads from given files, or stdin by default.
+
+Outputs to stdout.
+
+Usage:
+  asciify [FILE...]
+  asciify -h | --help
+  asciify --version
+
+Global Options:
+  -h, --help             Show this screen.
+  --version              Show version.
+
+Homepage: https://github.com/alasdairmorris/asciify
+```
 
 ## Examples
 
+```
+$ date | asciify
+Mon 12 Aug 2024 10:13:19 BST
+```
 
 ## License
 
